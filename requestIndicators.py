@@ -50,7 +50,7 @@ def get_indicators(id, name_u, html):
 							'name': tds[1].text,  # Наименование показателя
 							'dimension': tds[2].text,  # Единица измерения
 							'value': tds[3].text}  # Значение показателя
-					indicator_csv(name_u, data)
+					indicator_csv(id, data)
 
 				elif len(tds) == 3:
 					# print(f"Пункт . Наименование: {tds[0].text}. Измерение: {tds[1].text}. "
@@ -59,7 +59,7 @@ def get_indicators(id, name_u, html):
 							'name': tds[0].text,  # Наименование показателя
 							'dimension': tds[1].text,  # Единица измерения
 							'value': tds[2].text}  # Значение показателя
-					indicator_csv(name_u, data)
+					indicator_csv(id, data)
 
 
 def indicator_csv(filename, data):
@@ -79,6 +79,6 @@ def main():
 
 
 if __name__ == '__main__':
-	# start_time = time.process_time()
+	start_time = time.process_time()
 	main()
-# print("--- %s seconds ---" % (time.process_time() - start_time))
+	print("--- %s seconds ---" % (time.process_time() - start_time))
