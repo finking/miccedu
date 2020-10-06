@@ -17,10 +17,10 @@ def main():
 
 	figure = univers.loc['Средний балл ЕГЭ студентов, принятых по результатам ЕГЭ на обучение по очной форме по программам '
 				  'бакалавриата и специалитета за счет средств соответствующих бюджетов бюджетной системы РФ']
-	figure = figure.astype(float)
-	figure.plot(kind='bar')
-
-	plt.show()
+	# figure = figure.astype(float)
+	# figure.plot(kind='bar')
+	#
+	# plt.show()
 
 def univers_research():
 	name_row = True
@@ -37,6 +37,10 @@ def univers_research():
 		univers[i] = df['Значение'].tolist()
 	univers = univers.rename(columns=universAbbs)
 	# print(univers)
+	try:
+		univers.to_excel(excel_writer='data/analysis1.xlsx')
+	except Exception as e:
+		print(e)
 	return univers
 
 

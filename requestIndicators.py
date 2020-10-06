@@ -34,7 +34,8 @@ def get_indicators(id, name_u, html):
 				data = {'item': tds[0].text,  # №п/п
 						'name': tds[1].text,  # Наименование показателя
 						'dimension': tds[2].text,  # Единица измерения
-						'value': tds[3].text.replace(',', '.')}  # Значение показателя
+						# 'value': tds[3].text.replace(',', '.')}  # Значение показателя
+						'value': tds[3].text}  # Значение показателя
 				indicator_csv(id, data)
 
 	dop = tables.find('table', id= 'analis_dop')
