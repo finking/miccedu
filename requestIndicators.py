@@ -10,7 +10,7 @@ def read_csv():
 	with open(UNIVERCSV) as f:
 		reader = csv.reader(f)
 		for row in reader:
-			pattern = 'Плеханов'
+			pattern = 'университет управления'
 			if row[0].find(pattern) != -1:
 				dictUniver[row[2]] = [row[0], row[1]]
 			# print(f'Считываются данные для "{row[0]}"')
@@ -34,7 +34,7 @@ def get_indicators(id, name_u, html):
 				data = {'item': tds[0].text,  # №п/п
 						'name': tds[1].text,  # Наименование показателя
 						'dimension': tds[2].text,  # Единица измерения
-						'value': tds[3].text}  # Значение показателя
+						'value': tds[3].text.replace(',', '.')}  # Значение показателя
 				indicator_csv(id, data)
 
 	dop = tables.find('table', id= 'analis_dop')
