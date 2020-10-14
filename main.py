@@ -4,45 +4,48 @@ from config import DIR, UNIVERCSV
 
 universID = [60, 209, 1766, 1767, 1783]
 universAbbs = {
-	60: 'ГУУ',
-	209: 'РЭУ',
-	1766: 'ВШЭ',
-	1767: 'Фин.Универ',
-	1783: 'РАНХиГС'
+    60: 'ГУУ',
+    209: 'РЭУ',
+    1766: 'ВШЭ',
+    1767: 'Фин.Универ',
+    1783: 'РАНХиГС'
 }
 
 
 def main():
-	univers = univers_research()
+    univers = univers_research()
+    figure = univers.loc[0]['ГУУ': 'РАНХиГС']
+    figure = figure.astype(float)
+    figure.plot(kind='bar')
+    plt.show()
 
-	figure = univers.loc['Средний балл ЕГЭ студентов, принятых по результатам ЕГЭ на обучение по очной форме по программам '
-				  'бакалавриата и специалитета за счет средств соответствующих бюджетов бюджетной системы РФ']
-	# figure = figure.astype(float)
-	# figure.plot(kind='bar')
-	#
-	# plt.show()
 
 def univers_research():
-	name_row = True
-	univers = pd.DataFrame(index=range(120))
-	for i in universID:
-		df = pd.read_csv(f"{DIR}/{i}.csv", names=['Пункт', 'Показатель', 'Ед. изм', 'Значение'],
-						 encoding='cp1251')
-		if name_row:
-		# 	univers['Пункт'] = df['Пункт']
-		# 	univers['Показатель'] = df['Показатель']
-		# 	univers['Ед. изм'] = df['Ед. изм']
-			univers.index = df['Показатель']
-			name_row = False
-		univers[i] = df['Значение'].tolist()
-	univers = univers.rename(columns=universAbbs)
-	# print(univers)
-	try:
-		univers.to_excel(excel_writer='data/analysis1.xlsx')
-	except Exception as e:
-		print(e)
-	return univers
+    name_row = True
+    univers = pd.DataFrame(index=range(120))
+    for i in universID:
+        df = pd.read_csv(f"{DIR}/{i}.csv", names=['Пункт', 'Показатель', 'Ед. изм', 'Значение'],
+                         encoding='cp1251', decimal=',')
+        if name_row:
+            univers['Показатель'] = df['Показатель']
+            name_row = False
+        univers[i] = df['Значение'].tolist()
+    univers = univers.rename(columns=universAbbs)
+    # print(univers)
+    try:
+        writer = pd.ExcelWriter('data/analysis1.xlsx', engine='xlsxwriter', options={'strings_to_numbers': True})
+        univers.to_excel(writer)
+        workbook = writer.book
+        worksheet = writer.sheets['Sheet1']
+        format1 = workbook.add_format({'bold': False, 'font_name': 'Arial', 'font_size': 10})
+        format2 = workbook.add_format({'num_format': '# ##0.00'})
+        worksheet.set_column('B:B', 100, format1)
+        worksheet.set_column('C:G', 10, format2)
+        writer.save()
+    except Exception as e:
+        print(e)
+    return univers
 
 
 if __name__ == '__main__':
-	main()
+    main()
