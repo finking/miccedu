@@ -17,6 +17,7 @@ def main():
     df['SUM'] = [27, 24, 22, 32]
     df['REA'] = [30, 35, 27, 30]
     df['SANEPA'] = [25, 30, 29, 28]
+    df['Description'] = ['Perv', 'Vtor', 'Tret', 'Chet']
     print(df)
 
     # print(df.loc["Score1"])
@@ -24,10 +25,19 @@ def main():
     # # # df.plot(x='Name', y = 'Score1', kind='bar')
     # plt.show()
     print("**")
+    df.sum()
 
-    df.loc['new'] = df.loc['Score0']+df.loc['Score1']
+    # Сложение только для цифровых данных
+    # df.loc['new'] = df.loc[['Score0', 'Score1']].sum(numeric_only=True)
+    # df['Description']['new'] = 'ScoreSum'
+    # print(df)
+
+    # Деление определенных столбцов
+    df.loc['new'] = df.loc['Score0', df.columns[:-1]]/df.loc['Score1', df.columns[:-1]]
+    df['Description']['new'] = 'Dev'
     print(df)
-    df.to_excel(excel_writer='data/test.xlsx')
+
+    # df.to_excel(excel_writer='data/test.xlsx')
 
 def write_xlsx(data):
     # Create a workbook and add a worksheet.

@@ -14,10 +14,10 @@ universAbbs = {
 
 def main():
     univers = univers_research()
-    figure = univers.loc[0]['ГУУ': 'РАНХиГС']
-    figure = figure.astype(float)
-    figure.plot(kind='bar')
-    plt.show()
+    # figure = univers.loc[0]['ГУУ': 'РАНХиГС']
+    # figure = figure.astype(float)
+    # figure.plot(kind='bar')
+    # plt.show()
 
 
 def univers_research():
@@ -31,6 +31,16 @@ def univers_research():
             name_row = False
         univers[i] = df['Значение'].tolist()
     univers = univers.rename(columns=universAbbs)
+
+    # Добавление численности НПР
+    univers.loc[len(univers)] = univers.loc[85: 86, univers.columns[1:]].astype(float).sum(numeric_only=True)
+    univers['Показатель'][len(univers)-1] = 'Численность НПР'
+
+    # Добавление доли НПР к общему количеству студентов
+    univers.loc[len(univers)] = univers.loc[120, univers.columns[1:]].astype(float)/\
+                                univers.loc[61, univers.columns[1:]].astype(float)
+    univers['Показатель'][len(univers)-1] = 'Доля НПР к общему кол-ву студентов'
+    print(univers)
     # print(univers)
     try:
         writer = pd.ExcelWriter('data/analysis1.xlsx', engine='xlsxwriter', options={'strings_to_numbers': True})
