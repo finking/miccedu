@@ -1,7 +1,9 @@
-import pandas as pd
-import matplotlib.pyplot as plt
-from config import DIR, YEAR, UNIVERCSV
+import pandas as pd, os
+from utils import get_html
+import requestIndicators, time
+from config import BASEURL, VPO, DIR, YEAR
 DEGREE = 1000
+listFiles = []
 
 universID = [60, 209, 1766, 1767, 1783]
 universAbbs = {
@@ -13,15 +15,23 @@ universAbbs = {
 }
 
 
-def main():
-    univers = univers_research()
-    # figure = univers.loc[0]['ГУУ': 'РАНХиГС']
-    # figure = figure.astype(float)
-    # figure.plot(kind='bar')
-    # plt.show()
+def list_files(pathFiles):
+    for file in os.listdir(pathFiles):
+        listFiles.append(file.split('.')[0])
 
 
 def univers_research():
+    for i in universID:
+        if str(i) not in listFiles:
+            start_time = time.process_time()
+            html = get_html(BASEURL+VPO+str(i))
+            requestIndicators.get_indicators(i, html)
+            print(f'Данные для вуза с кодом {i} записаны за: ')
+            print("%s seconds." % (time.process_time() - start_time))
+        else:
+            print(f'Файл с параметрами вуза с кодом {i} уже существует. '
+                  f'Если его необходимо обновить, то нужно удалить {DIR}/{i}.csv')
+
     name_row = True
     univers = pd.DataFrame(index=range(120))
     for i in universID:
@@ -77,4 +87,5 @@ def univers_research():
 
 
 if __name__ == '__main__':
-    main()
+    list_files(DIR)
+    univers_research()

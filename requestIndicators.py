@@ -1,26 +1,10 @@
 import csv
-from config import UNIVERCSV, DIR
-from utils import get_html
+from config import DIR
 from bs4 import BeautifulSoup as bs
-import time
 
 
-def read_csv():
-    dictUniver = {}
-    with open(UNIVERCSV) as f:
-        reader = csv.reader(f)
-        for row in reader:
-            patterns = ['Плеханов', 'Государственный университет управления', 'Высшая школа экономики', 'Финансовый','народного']
-            for pattern in patterns:
-                if row[0].find(pattern) != -1:
-                    dictUniver[row[2]] = [row[0], row[1]]
-        # print(f'Считываются данные для "{row[0]}"')
-    return dictUniver
-
-
-def get_indicators(id, name_u, html):
+def get_indicators(id, html):
     tables = bs(html, 'lxml')
-    print(f'Сканируется "{name_u}"')
     tables_u = tables.find_all('table', class_='napde')
     for table in tables_u:
         trs = table.find_all('tr')
@@ -63,16 +47,3 @@ def indicator_csv(filename, data):
                          data['name'],
                          data['dimension'],
                          data['value']))
-
-
-def main():
-    dictUniver = read_csv()
-    for id, value in dictUniver.items():
-        html = get_html(value[1])
-        get_indicators(id, value[0], html)
-
-
-if __name__ == '__main__':
-    start_time = time.process_time()
-    main()
-    print("--- %s seconds ---" % (time.process_time() - start_time))
