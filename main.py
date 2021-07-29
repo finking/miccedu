@@ -1,29 +1,33 @@
-import pandas as pd, os
-from utils import get_html
-import requestIndicators, time
-from config import BASEURL, VPO, DIR, YEAR
+import os
+import requestIndicators
+import time
+from config import BASEURL, VPO, DIR, universAbbs
+from utils import get_html, get_indicators, writer_xlsx
+
 DEGREE = 1000
 listFiles = []
 
-universAbbs = {
-    60: 'ГУУ',
-    209: 'РЭУ',
-    1766: 'ВШЭ',
-    1767: 'ФинУнивер',
-    1783: 'РАНХиГС'
-}  # В Аббревиатуре нельзя использовать ".", т.е. нельзя написать Фин.Универ
+
+def main():
+    list_files(DIR)
+    get_univers()
+    univers = research_univers()
+    writer_xlsx(univers)
+    print(univers)
 
 
+# Получение существующих файлов по университетам.
 def list_files(pathFiles):
     for file in os.listdir(pathFiles):
         listFiles.append(file.split('.')[0])
 
 
-def univers_research():
+# Получение данных по университетам.
+def get_univers():
     for k, v in universAbbs.items():
         if v not in listFiles:
             start_time = time.process_time()
-            html = get_html(BASEURL+VPO+str(k))
+            html = get_html(BASEURL + VPO + str(k))
             requestIndicators.get_indicators(v, html)
             print(f'Данные для {v} записаны за: ')
             print("%s seconds." % (time.process_time() - start_time))
@@ -31,59 +35,45 @@ def univers_research():
             print(f'Файл с параметрами {v} уже существует. '
                   f'Если его необходимо обновить, то нужно удалить {DIR}/{v}.csv')
 
-    name_row = True
-    univers = pd.DataFrame(index=range(120))
-    for k, v in universAbbs.items():
-        df = pd.read_csv(f"{DIR}/{v}.csv", names=['Пункт', 'Показатель', 'Ед. изм', 'Значение'],
-                         encoding='cp1251', decimal=',')
-        if name_row:
-            univers['Показатель'] = df['Показатель']
-            name_row = False
-        univers[v] = df['Значение'].tolist()
+
+def research_univers():
+    # Создание excel файла для анализа нескольких университетов.
+    univers = get_indicators()
 
     # Добавление численности НПР
-    univers.loc[len(univers)] = univers.loc[85: 86, univers.columns[1:]].astype(float).sum(numeric_only=True)
-    univers['Показатель'][len(univers)-1] = 'Численность НПР'
+    add_indicator(univers, 'sum',  'Численность НПР', 85, 86)
 
     # Добавление доли НПР к общему количеству студентов
-    univers.loc[len(univers)] = univers.loc[120, univers.columns[1:]].astype(float)/\
-                                univers.loc[61, univers.columns[1:]].astype(float)
-    univers['Показатель'][len(univers)-1] = 'Доля НПР к общему кол-ву студентов'
+    add_indicator(univers, 'div', 'Доля НПР к общему кол-ву студентов', 120, 61)
 
     # Доходы вуза из бюджетных источников
-    univers.loc[len(univers)] = (univers.loc[111, univers.columns[1:]].astype(float) -
-                                 univers.loc[112, univers.columns[1:]].astype(float)) / DEGREE
-    univers['Показатель'][len(univers) - 1] = 'Доходы вуза из бюджетных источников (млн руб)'
+    add_indicator(univers, 'sub', 'Доходы вуза из бюджетных источников (млн руб)', 111, 112, degree=DEGREE)
 
     # Общий доход ВУЗа в расчете на одну публикацию
-    univers.loc[len(univers)] = univers.loc[111, univers.columns[1:]].astype(float) / \
-                                (univers.loc[19, univers.columns[1:]].astype(float)/100 *
-                                 univers.loc[120, univers.columns[1:]]) / DEGREE
-    univers['Показатель'][len(univers) - 1] = 'Общий доход ВУЗа в расчете на одну публикацию в Scopus (млн руб)'
+    add_indicator(univers, 'div/mul', 'Общий доход ВУЗа в расчете на одну публикацию в Scopus (млн руб)',
+                  111, 19, 120, degree=DEGREE, hundred=100)
 
     # Доход ВУЗа из бюджета в расчете на одну публикацию
-    univers.loc[len(univers)] = univers.loc[122, univers.columns[1:]].astype(float) / \
-                                (univers.loc[19, univers.columns[1:]].astype(float)/100 *
-                                 univers.loc[120, univers.columns[1:]])
-    univers['Показатель'][len(univers) - 1] = 'Доход ВУЗа из бюджета в расчете на одну публикацию в Scopus (млн руб)'
-
-    print(univers)
-    # print(univers)
-    try:
-        writer = pd.ExcelWriter(f'data/analysis_{YEAR}.xlsx', engine='xlsxwriter', options={'strings_to_numbers': True})
-        univers.to_excel(writer)
-        workbook = writer.book
-        worksheet = writer.sheets['Sheet1']
-        format1 = workbook.add_format({'bold': False, 'font_name': 'Arial', 'font_size': 10})
-        format2 = workbook.add_format({'num_format': '# ##0.00'})
-        worksheet.set_column('B:B', 100, format1)
-        worksheet.set_column('C:G', 10, format2)
-        writer.save()
-    except Exception as e:
-        print(f"ERROR: Запись в файл не удалась! По причине:{e}")
+    add_indicator(univers, 'div/mul', 'Доход ВУЗа из бюджета в расчете на одну публикацию в Scopus (млн руб)',
+                  122, 19, 120, hundred=100)
     return univers
 
 
+def add_indicator(univers, operator, name, ind1, ind2, ind3=0, degree=1, hundred=1):
+    if operator == 'sum':
+        univers.loc[len(univers)] = univers.loc[ind1: ind2, univers.columns[1:]].astype(float).sum(numeric_only=True)
+    elif operator == 'div':
+        univers.loc[len(univers)] = univers.loc[ind1, univers.columns[1:]].astype(float) / \
+                                    univers.loc[ind2, univers.columns[1:]].astype(float) / degree
+    elif operator == 'sub':
+        univers.loc[len(univers)] = (univers.loc[ind1, univers.columns[1:]].astype(float) -
+                                     univers.loc[ind2, univers.columns[1:]].astype(float)) / degree
+    elif operator == 'div/mul':
+        univers.loc[len(univers)] = univers.loc[ind1, univers.columns[1:]].astype(float) / \
+                                    (univers.loc[ind2, univers.columns[1:]].astype(float) / hundred *
+                                     univers.loc[ind3, univers.columns[1:]]) / degree
+    univers['Показатель'][len(univers) - 1] = name
+
+
 if __name__ == '__main__':
-    list_files(DIR)
-    univers_research()
+    main()
