@@ -5,14 +5,13 @@ from config import BASEURL, VPO, DIR, YEAR
 DEGREE = 1000
 listFiles = []
 
-universID = [60, 209, 1766, 1767, 1783]
 universAbbs = {
     60: 'ГУУ',
     209: 'РЭУ',
     1766: 'ВШЭ',
-    1767: 'Фин.Универ',
+    1767: 'ФинУнивер',
     1783: 'РАНХиГС'
-}
+}  # В Аббревиатуре нельзя использовать ".", т.е. нельзя написать Фин.Универ
 
 
 def list_files(pathFiles):
@@ -21,27 +20,26 @@ def list_files(pathFiles):
 
 
 def univers_research():
-    for i in universID:
-        if str(i) not in listFiles:
+    for k, v in universAbbs.items():
+        if v not in listFiles:
             start_time = time.process_time()
-            html = get_html(BASEURL+VPO+str(i))
-            requestIndicators.get_indicators(i, html)
-            print(f'Данные для вуза с кодом {i} записаны за: ')
+            html = get_html(BASEURL+VPO+str(k))
+            requestIndicators.get_indicators(v, html)
+            print(f'Данные для {v} записаны за: ')
             print("%s seconds." % (time.process_time() - start_time))
         else:
-            print(f'Файл с параметрами вуза с кодом {i} уже существует. '
-                  f'Если его необходимо обновить, то нужно удалить {DIR}/{i}.csv')
+            print(f'Файл с параметрами {v} уже существует. '
+                  f'Если его необходимо обновить, то нужно удалить {DIR}/{v}.csv')
 
     name_row = True
     univers = pd.DataFrame(index=range(120))
-    for i in universID:
-        df = pd.read_csv(f"{DIR}/{i}.csv", names=['Пункт', 'Показатель', 'Ед. изм', 'Значение'],
+    for k, v in universAbbs.items():
+        df = pd.read_csv(f"{DIR}/{v}.csv", names=['Пункт', 'Показатель', 'Ед. изм', 'Значение'],
                          encoding='cp1251', decimal=',')
         if name_row:
             univers['Показатель'] = df['Показатель']
             name_row = False
-        univers[i] = df['Значение'].tolist()
-    univers = univers.rename(columns=universAbbs)
+        univers[v] = df['Значение'].tolist()
 
     # Добавление численности НПР
     univers.loc[len(univers)] = univers.loc[85: 86, univers.columns[1:]].astype(float).sum(numeric_only=True)
