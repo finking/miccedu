@@ -5,6 +5,7 @@ from config import YEAR, DIR, universAbbs
 
 def get_html(url):
     r = requests.get(url)
+    # r = requests.get(url, verify=False) # Если ошибка с сертификатом.
     if r.ok:
         # r.encoding = 'cp1251'
         return r.text
